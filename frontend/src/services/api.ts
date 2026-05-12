@@ -18,6 +18,7 @@ const api = axios.create({
     },
 });
 
+// Получение CSRF токена из куки
 const getCSRFTokenFromCookie = () => {
     const name = 'csrftoken';
     const cookieValue = document.cookie
@@ -27,7 +28,12 @@ const getCSRFTokenFromCookie = () => {
     return cookieValue || '';
 };
 
+// Интерсептор для добавления CSRF токена в каждый запрос
 api.interceptors.request.use((config) => {
+    // Пропускаем запрос на получение CSRF
+    if (config.url?.includes('/csrf/')) {
+        return config;
+    }
     const token = getCSRFTokenFromCookie();
     if (token) {
         config.headers['X-CSRFToken'] = token;
@@ -35,6 +41,22 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Функция для инициализации CSRF токена
+export const getCSRFToken = async () => {
+    try {
+        const response = await api.get('/csrf/');
+        const token = response.data.csrfToken;
+        if (token) {
+            api.defaults.headers.common['X-CSRFToken'] = token;
+        }
+        return token;
+    } catch (error) {
+        console.error('Ошибка получения CSRF:', error);
+        return '';
+    }
+};
+
+// Экспортируем api для использования в других местах
 export const goalApi = {
     getAll: () => api.get<Goal[]>('/goals/'),
     create: (data: Partial<Goal>) => api.post<Goal>('/goals/', data),
@@ -50,15 +72,6 @@ export const authApi = {
         api.post('/login/', { username, password }),
     logout: () => api.post('/logout/'),
     checkAuth: () => api.get('/check-auth/'),
-};
-
-export const initCSRF = async () => {
-    try {
-        await api.get('/csrf/');
-        console.log('CSRF token initialized');
-    } catch (error) {
-        console.error('CSRF init error:', error);
-    }
 };
 
 export default api;

@@ -111,7 +111,7 @@ const App: React.FC = () => {
 
     if (!isAuthenticated) {
         return <Login onLogin={async () => {
-            await initCSRF();
+            await getCSRFToken();
             setIsAuthenticated(true);
             await loadGoals();
         }} />;
@@ -255,7 +255,7 @@ const App: React.FC = () => {
                                                 if (e.key === 'Enter') {
                                                     handleAddSubtask(goal.id);
                                                 }
-                            }}
+                                            }}
                                         />
                                         <button onClick={() => handleAddSubtask(goal.id)}>+</button>
                                     </div>
