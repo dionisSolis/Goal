@@ -123,3 +123,16 @@ CSRF_COOKIE_SECURE = not DEBUG  # True на продакшене (HTTPS)
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG  # True на продакшене (HTTPS)
+
+# ========== АВТОМАТИЧЕСКИЕ МИГРАЦИИ (только для Render) ==========
+import sys
+
+# Запускаем миграции автоматически при старте (кроме команд manage.py)
+if 'migrate' not in sys.argv and 'makemigrations' not in sys.argv and 'collectstatic' not in sys.argv:
+    try:
+        from django.core.management import call_command
+        print("🔄 Checking and applying migrations...")
+        call_command('migrate', interactive=False)
+        print("✅ Migrations applied successfully")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not apply migrations: {e}")
