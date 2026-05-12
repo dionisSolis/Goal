@@ -13,8 +13,12 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.c
 # Настройка базы данных (поддержка Render PostgreSQL и локальной)
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        engine='django.db.backends.postgresql',
+        conn_max_age=600,
+    )
+}
 else:
     DATABASES = {
         'default': {
