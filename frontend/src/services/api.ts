@@ -4,7 +4,7 @@ import { Goal, Subtask } from '../types';
 // Определяем API URL в зависимости от окружения
 const getApiUrl = () => {
   if (process.env.NODE_ENV === 'production') {
-    return 'https://goal-tracker-backend.onrender.com/api';
+    return 'https://goal-tracker-backend-lc14.onrender.com/api';
   }
   return 'http://localhost:8000/api';
 };
