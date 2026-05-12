@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { goalApi, authApi, initCSRF } from './services/api';
+import { goalApi, authApi, getCSRFToken } from './services/api';
 import { Goal } from './types';
 import Statistics from './components/Statistics';
 import Login from './components/Login';
@@ -22,7 +22,7 @@ const App: React.FC = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                await initCSRF();
+                await getCSRFToken();
                 const response = await authApi.checkAuth();
                 if (response.data.authenticated) {
                     setIsAuthenticated(true);
