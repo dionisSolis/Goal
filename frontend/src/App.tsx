@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { goalApi, authApi, getCSRFToken } from './services/api';
+import { goalApi, authApi, initCSRF } from './services/api';
 import { Goal } from './types';
 import Statistics from './components/Statistics';
 import Login from './components/Login';
@@ -20,9 +20,9 @@ const App: React.FC = () => {
     const [newSubtask, setNewSubtask] = useState<{ [key: number]: string }>({});
 
     useEffect(() => {
-        const init = async () => {
+        const checkAuth = async () => {
             try {
-                await getCSRFToken();
+                await initCSRF();
                 const response = await authApi.checkAuth();
                 if (response.data.authenticated) {
                     setIsAuthenticated(true);
@@ -30,13 +30,14 @@ const App: React.FC = () => {
                 } else {
                     setIsAuthenticated(false);
                 }
-            } catch {
+            } catch (error) {
+                console.error('Auth check error:', error);
                 setIsAuthenticated(false);
             } finally {
                 setLoading(false);
             }
         };
-        init();
+        checkAuth();
     }, []);
 
     const loadGoals = async () => {
@@ -67,39 +68,31 @@ const App: React.FC = () => {
             await loadGoals();
         } catch (error) {
             console.error('Ошибка создания цели:', error);
-            alert('Ошибка создания цели. Проверьте консоль.');
+            alert('Ошибка создания цели');
         }
     };
 
     const handleAddSubtask = async (goalId: number) => {
-    const title = newSubtask[goalId];
-    if (!title?.trim()) return;
+        const title = newSubtask[goalId];
+        if (!title?.trim()) return;
 
-    try {
-        // Убедимся, что CSRF токен есть
-        await getCSRFToken();
-        
-        const response = await goalApi.addSubtask(goalId, title);
-        console.log('Подзадача создана:', response.data);
-        
-        setNewSubtask({ ...newSubtask, [goalId]: '' });
-        await loadGoals();
-    } catch (error: any) {
-        console.error('Ошибка добавления подзадачи:', error);
-        console.error('Ответ сервера:', error.response?.data);
-        alert(`Ошибка: ${error.response?.data?.title?.[0] || 'Не удалось добавить подзадачу'}`);
-    }
-};
+        try {
+            await goalApi.addSubtask(goalId, title);
+            setNewSubtask({ ...newSubtask, [goalId]: '' });
+            await loadGoals();
+        } catch (error) {
+            console.error('Ошибка добавления подзадачи:', error);
+        }
+    };
 
     const handleCompleteSubtask = async (goalId: number, subtaskId: number) => {
-    try {
-        await getCSRFToken();
-        await goalApi.completeSubtask(goalId, subtaskId);
-        await loadGoals();
-    } catch (error) {
-        console.error('Ошибка выполнения подзадачи:', error);
-    }
-};
+        try {
+            await goalApi.completeSubtask(goalId, subtaskId);
+            await loadGoals();
+        } catch (error) {
+            console.error('Ошибка выполнения подзадачи:', error);
+        }
+    };
 
     const handleDeleteGoal = async (id: number) => {
         if (window.confirm('Удалить эту цель?')) {
@@ -118,7 +111,7 @@ const App: React.FC = () => {
 
     if (!isAuthenticated) {
         return <Login onLogin={async () => {
-            await getCSRFToken();
+            await initCSRF();
             setIsAuthenticated(true);
             await loadGoals();
         }} />;
@@ -262,7 +255,7 @@ const App: React.FC = () => {
                                                 if (e.key === 'Enter') {
                                                     handleAddSubtask(goal.id);
                                                 }
-                                            }}
+                            }}
                                         />
                                         <button onClick={() => handleAddSubtask(goal.id)}>+</button>
                                     </div>

@@ -1,17 +1,14 @@
 import axios from 'axios';
 import { Goal, Subtask } from '../types';
 
-// Определяем API URL в зависимости от окружения
 const getApiUrl = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://goal-tracker-backend-lc14.onrender.com/api';
-  }
-  return 'http://localhost:8000/api';
+    if (process.env.NODE_ENV === 'production') {
+        return 'https://goal-tracker-backend-lc14.onrender.com/api';
+    }
+    return 'http://localhost:8000/api';
 };
 
 const API_BASE_URL = getApiUrl();
-
-console.log('API URL:', API_BASE_URL);  // Для отладки
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -21,29 +18,17 @@ const api = axios.create({
     },
 });
 
-// Функция для получения CSRF токена
-export const getCSRFToken = async () => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/csrf/`, {
-            withCredentials: true,
-        });
-        const token = response.data.csrfToken;
-        api.defaults.headers.common['X-CSRFToken'] = token;
-        return token;
-    } catch (error) {
-        console.error('Ошибка получения CSRF:', error);
-        return '';
-    }
+const getCSRFTokenFromCookie = () => {
+    const name = 'csrftoken';
+    const cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(name + '='))
+        ?.split('=')[1];
+    return cookieValue || '';
 };
 
-// Интерсептор для добавления CSRF токена в каждый запрос
-api.interceptors.request.use(async (config) => {
-    // Пропускаем запрос на получение CSRF, чтобы избежать цикла
-    if (config.url?.includes('/csrf/')) {
-        return config;
-    }
-    
-    const token = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+api.interceptors.request.use((config) => {
+    const token = getCSRFTokenFromCookie();
     if (token) {
         config.headers['X-CSRFToken'] = token;
     }
@@ -65,6 +50,15 @@ export const authApi = {
         api.post('/login/', { username, password }),
     logout: () => api.post('/logout/'),
     checkAuth: () => api.get('/check-auth/'),
+};
+
+export const initCSRF = async () => {
+    try {
+        await api.get('/csrf/');
+        console.log('CSRF token initialized');
+    } catch (error) {
+        console.error('CSRF init error:', error);
+    }
 };
 
 export default api;

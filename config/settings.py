@@ -10,15 +10,11 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
-# Настройка базы данных (поддержка Render PostgreSQL и локальной)
+# Настройка базы данных
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        engine='django.db.backends.postgresql',
-        conn_max_age=600,
-    )
-}
+        'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+    }
 else:
     DATABASES = {
         'default': {
@@ -46,7 +42,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Для статики на Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -98,28 +94,38 @@ REST_FRAMEWORK = {
     ),
 }
 
-# CORS настройки (поддержка локальной и продакшен)
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Только для разработки
+# CORS настройки
 CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://localhost:8000",
     "https://goal-tracker-frontend.onrender.com",
+]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    "http://localhost:8000",
     "https://goal-tracker-frontend.onrender.com",
-    "https://goal-tracker-backend.onrender.com",
+    "https://goal-tracker-backend-lc14.onrender.com",
 ]
 
-# Cookie настройки
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = not DEBUG  # True на продакшене (HTTPS)
-
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = not DEBUG  # True на продакшене (HTTPS)
+# Cookie настройки для продакшена
+if not DEBUG:
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_DOMAIN = '.onrender.com'
+    
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_DOMAIN = '.onrender.com'
+else:
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_COOKIE_SECURE = False
+    
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = False
