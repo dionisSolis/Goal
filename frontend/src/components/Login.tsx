@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { authApi, getCSRFToken } from '../services/api';
-import axios from 'axios';
 
 interface LoginProps {
     onLogin: () => void;
@@ -39,7 +38,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setError('');
         setSuccessMsg('');
 
-        // Валидация
         if (username.length < 3) {
             setError('Имя пользователя должно быть не менее 3 символов');
             setLoading(false);
@@ -61,21 +59,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         try {
             await getCSRFToken();
             
-            // Регистрация
-            await axios.post('http://localhost:8000/api/register/', {
-                username,
-                email,
-                password
-            }, {
-                withCredentials: true,
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+            // Используем axios из api.ts
+            const { default: api } = await import('../services/api');
+            await api.post('/register/', { username, email, password });
             
             setSuccessMsg('Регистрация успешна! Выполняется вход...');
             
-            // Автоматический вход после регистрации
             setTimeout(async () => {
                 try {
                     await authApi.login(username, password);
@@ -89,12 +78,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         } catch (err: any) {
             if (err.response?.data?.username) {
                 setError(`Имя пользователя: ${err.response.data.username[0]}`);
-            } else if (err.response?.data?.email) {
-                setError(`Email: ${err.response.data.email[0]}`);
-            } else if (err.response?.data?.password) {
-                setError(`Пароль: ${err.response.data.password[0]}`);
             } else {
-                setError(err.response?.data?.error || 'Ошибка регистрации. Попробуйте другое имя.');
+                setError(err.response?.data?.error || 'Ошибка регистрации');
             }
         } finally {
             if (!successMsg) setLoading(false);
@@ -175,11 +160,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
                     </button>
                 </form>
-
-                <div className="login-demo">
-                    <p>📌 Уже есть аккаунт? Нажмите "Вход"</p>
-                    <p>🔐 Пароль: минимум 4 символа</p>
-                </div>
             </div>
         </div>
     );

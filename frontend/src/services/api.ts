@@ -1,7 +1,17 @@
 import axios from 'axios';
 import { Goal, Subtask } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// Определяем API URL в зависимости от окружения
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://goal-tracker-backend.onrender.com/api';
+  }
+  return 'http://localhost:8000/api';
+};
+
+const API_BASE_URL = getApiUrl();
+
+console.log('API URL:', API_BASE_URL);  // Для отладки
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -11,18 +21,15 @@ const api = axios.create({
     },
 });
 
-// Глобальная переменная для CSRF токена
-let csrfToken: string = '';
-
 // Функция для получения CSRF токена
 export const getCSRFToken = async () => {
     try {
-        const response = await axios.get('http://localhost:8000/api/csrf/', {
+        const response = await axios.get(`${API_BASE_URL}/csrf/`, {
             withCredentials: true,
         });
-        csrfToken = response.data.csrfToken;
-        api.defaults.headers.common['X-CSRFToken'] = csrfToken;
-        return csrfToken;
+        const token = response.data.csrfToken;
+        api.defaults.headers.common['X-CSRFToken'] = token;
+        return token;
     } catch (error) {
         console.error('Ошибка получения CSRF:', error);
         return '';
@@ -30,9 +37,15 @@ export const getCSRFToken = async () => {
 };
 
 // Интерсептор для добавления CSRF токена в каждый запрос
-api.interceptors.request.use((config) => {
-    if (csrfToken) {
-        config.headers['X-CSRFToken'] = csrfToken;
+api.interceptors.request.use(async (config) => {
+    // Пропускаем запрос на получение CSRF, чтобы избежать цикла
+    if (config.url?.includes('/csrf/')) {
+        return config;
+    }
+    
+    const token = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    if (token) {
+        config.headers['X-CSRFToken'] = token;
     }
     return config;
 });
