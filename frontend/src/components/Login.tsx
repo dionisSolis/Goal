@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authApi, getCSRFToken } from '../services/api';
+import { authApi } from '../services/api';
 
 interface LoginProps {
     onLogin: () => void;
@@ -13,20 +13,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [password2, setPassword2] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [successMsg, setSuccessMsg] = useState('');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        setSuccessMsg('');
 
         try {
-            await getCSRFToken();
             await authApi.login(username, password);
             onLogin();
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Неверное имя пользователя или пароль');
+            setError(err.response?.data?.detail || 'Неверное имя пользователя или пароль');
         } finally {
             setLoading(false);
         }
@@ -36,7 +33,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        setSuccessMsg('');
 
         if (username.length < 3) {
             setError('Имя пользователя должно быть не менее 3 символов');
@@ -57,24 +53,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
 
         try {
-            await getCSRFToken();
-            
-            // Используем axios из api.ts
-            const { default: api } = await import('../services/api');
-            await api.post('/register/', { username, email, password });
-            
-            setSuccessMsg('Регистрация успешна! Выполняется вход...');
-            
-            setTimeout(async () => {
-                try {
-                    await authApi.login(username, password);
-                    onLogin();
-                } catch (err) {
-                    setError('Ошибка входа после регистрации');
-                    setLoading(false);
-                }
-            }, 1000);
-            
+            await authApi.register(username, email, password);
+            // Автоматический вход после регистрации
+            await authApi.login(username, password);
+            onLogin();
         } catch (err: any) {
             if (err.response?.data?.username) {
                 setError(`Имя пользователя: ${err.response.data.username[0]}`);
@@ -82,7 +64,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 setError(err.response?.data?.error || 'Ошибка регистрации');
             }
         } finally {
-            if (!successMsg) setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -100,7 +82,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         onClick={() => {
                             setIsLogin(true);
                             setError('');
-                            setSuccessMsg('');
                         }}
                     >
                         Вход
@@ -110,7 +91,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         onClick={() => {
                             setIsLogin(false);
                             setError('');
-                            setSuccessMsg('');
                         }}
                     >
                         Регистрация
@@ -154,7 +134,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     )}
 
                     {error && <div className="login-error">{error}</div>}
-                    {successMsg && <div className="login-success">{successMsg}</div>}
 
                     <button type="submit" disabled={loading}>
                         {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { goalApi, authApi, getCSRFToken } from './services/api';
+import { goalApi, authApi } from './services/api';
 import { Goal } from './types';
 import Statistics from './components/Statistics';
 import Login from './components/Login';
@@ -21,21 +21,14 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const checkAuth = async () => {
-            try {
-                await getCSRFToken();
-                const response = await authApi.checkAuth();
-                if (response.data.authenticated) {
-                    setIsAuthenticated(true);
-                    await loadGoals();
-                } else {
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error('Auth check error:', error);
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                setIsAuthenticated(true);
+                await loadGoals();
+            } else {
                 setIsAuthenticated(false);
-            } finally {
-                setLoading(false);
             }
+            setLoading(false);
         };
         checkAuth();
     }, []);
@@ -49,14 +42,10 @@ const App: React.FC = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await authApi.logout();
-            setIsAuthenticated(false);
-            setGoals([]);
-        } catch (error) {
-            console.error('Ошибка выхода:', error);
-        }
+    const handleLogout = () => {
+        authApi.logout();
+        setIsAuthenticated(false);
+        setGoals([]);
     };
 
     const handleCreateGoal = async (e: React.FormEvent) => {
@@ -110,10 +99,9 @@ const App: React.FC = () => {
     }
 
     if (!isAuthenticated) {
-        return <Login onLogin={async () => {
-            await getCSRFToken();
+        return <Login onLogin={() => {
             setIsAuthenticated(true);
-            await loadGoals();
+            loadGoals();
         }} />;
     }
 
