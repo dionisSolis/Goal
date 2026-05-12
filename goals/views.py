@@ -6,8 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .models import Goal, Subtask
-from .serializers import GoalSerializer, SubtaskSerializer
-
+from .serializers import GoalSerializer, SubtaskSerializer, UserSerializer
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -41,6 +40,24 @@ def check_auth(request):
     if request.user.is_authenticated:
         return Response({'authenticated': True, 'user': request.user.username})
     return Response({'authenticated': False})
+
+
+# API регистрации
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        # Автоматически логиним пользователя после регистрации
+        login(request, user)
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'message': 'Регистрация успешна'
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GoalViewSet(viewsets.ModelViewSet):

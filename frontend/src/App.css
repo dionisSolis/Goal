@@ -817,3 +817,13 @@ body {
 .btn-secondary:hover {
     background: #e2e8f0;
 }
+
+.login-success {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    text-align: center;
+}
