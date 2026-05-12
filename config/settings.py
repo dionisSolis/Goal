@@ -94,26 +94,12 @@ REST_FRAMEWORK = {
     ),
 }
 
-# CORS настройки - РАСШИРЕННЫЕ
+# CORS настройки
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://goal-tracker-frontend.onrender.com",
 ]
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost:\d+$",
-]
-
-# CSRF настройки - ДЛЯ ПРОДАКШЕНА
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_DOMAIN = '.onrender.com'
-
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_DOMAIN = '.onrender.com'
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
@@ -121,24 +107,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://goal-tracker-backend-lc14.onrender.com",
 ]
 
-# Дополнительно - разрешаем все методы
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+# Cookie настройки
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = False

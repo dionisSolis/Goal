@@ -7,6 +7,8 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .models import Goal, Subtask
 from .serializers import GoalSerializer, SubtaskSerializer, UserSerializer
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -59,7 +61,7 @@ def register(request):
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class GoalViewSet(viewsets.ModelViewSet):
     serializer_class = GoalSerializer
     permission_classes = [IsAuthenticated]
@@ -100,7 +102,7 @@ class GoalViewSet(viewsets.ModelViewSet):
         except Subtask.DoesNotExist:
             return Response({'error': 'Subtask not found'}, status=status.HTTP_404_NOT_FOUND)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class SubtaskViewSet(viewsets.ModelViewSet):
     serializer_class = SubtaskSerializer
     permission_classes = [IsAuthenticated]
